@@ -9,7 +9,7 @@
         Topmost="True" 
         ShowInTaskbar="False" 
         ShowActivated="False"
-        Icon="logo.ico">
+        Icon="pack://application:,,,/app.ico">
 
     <!-- Dark Mode Curved -->
     <Border Background="#1E1E1E" 
@@ -31,25 +31,73 @@
                 <StackPanel VerticalAlignment="Center">
                     <!-- Title -->
                     <TextBlock Text="EasyWords" 
-                               FontWeight="Bold" 
-                               FontSize="15" 
-                               Foreground="#F0F0F0"/>
+                   FontWeight="Bold" 
+                   FontSize="15" 
+                   Foreground="#F0F0F0"/>
+
+                    <!-- Subtitle / Instruction -->
+                    <TextBlock Text="Touch the ENG icon to change language" 
+                   FontSize="9" 
+                   Foreground="#888888" 
+                   Margin="0,2,0,0"/>
 
                     <!-- Keybinds -->
                     <StackPanel x:Name="KeybindHelpPanel" Margin="0,6,0,0">
-                        <TextBlock Text="• [Tab / ↓ / ↑]  Chuyển từ gợi ý" 
-                                   FontSize="11"
-                                   Foreground="#4EC9B0" 
-                                   Margin="0,0,0,3"/>
+                        <TextBlock Text="• [Tab / ↓ / ↑] : Change suggestion" 
+                       FontSize="11"
+                       Foreground="#4EC9B0" 
+                       Margin="0,0,0,3"/>
 
-                        <TextBlock Text="• [Enter]  Chọn từ" 
-                                   FontSize="11" 
-                                   Foreground="#4EC9B0"/>
+                        <TextBlock Text="• [Enter] : Select suggestion" 
+                       FontSize="11" 
+                       Foreground="#4EC9B0"
+                       Margin="0,0,0,3"/>
+
+                        <!-- Thêm hướng dẫn phím tắt Ctrl + Shift + H -->
+                        <TextBlock Text="• [Ctrl+Shift+H] : Toggle menu" 
+                       FontSize="11" 
+                       Foreground="#4EC9B0"/>
                     </StackPanel>
                 </StackPanel>
 
-                <!-- - & x -->
+                <!-- Controls & Language Switcher -->
                 <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Top">
+                    <!-- Language Toggle Button -->
+                    <Button x:Name="LangBtn" 
+                Content="ENG" 
+                Width="42" 
+                Height="20" 
+                Margin="0,0,6,0"
+                Background="#2D2D30" 
+                Foreground="#4EC9B0" 
+                BorderBrush="#3F3F46"
+                BorderThickness="1"
+                FontSize="11" 
+                FontWeight="Bold"
+                Cursor="Hand" 
+                Focusable="False" 
+                Click="LangBtn_Click">
+                        <Button.Resources>
+                            <Style TargetType="Border">
+                                <Setter Property="CornerRadius" Value="3"/>
+                            </Style>
+                        </Button.Resources>
+                    </Button>
+
+                    <!-- Settings Gear Icon Button -->
+                    <Button x:Name="SettingsBtn"
+                Content="⚙" 
+                Width="20" 
+                Height="20" 
+                Margin="0,0,4,0"
+                Background="Transparent" 
+                BorderThickness="0" 
+                Foreground="#888888" 
+                FontSize="13" 
+                Cursor="Hand" 
+                Focusable="False" 
+                Click="SettingsButton_Click"/>
+
                     <Button Content="—" Width="20" Height="20" Background="Transparent" BorderThickness="0" Foreground="#888888" FontSize="12" Cursor="Hand" Focusable="False" Click="MinimizeButton_Click"/>
                     <Button Content="✕" Width="20" Height="20" Background="Transparent" BorderThickness="0" Foreground="#888888" FontSize="12" Cursor="Hand" Focusable="False" Click="CloseButton_Click"/>
                 </StackPanel>
