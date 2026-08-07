@@ -8,8 +8,7 @@
         Background="Transparent"
         Topmost="True" 
         ShowInTaskbar="False" 
-        ShowActivated="False"
-        Icon="logo.ico">
+        ShowActivated="False">
 
     <!-- Dark Mode Curved -->
     <Border Background="#1E1E1E" 

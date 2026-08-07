@@ -18,6 +18,9 @@ namespace EasyWords
 {
     public partial class MainWindow : Window
     {
+        public static MainWindow? Instance { get; private set; }
+        public static bool IsInjecting = false;
+
         private string _engPath = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "eng.txt");
         private string[] _activeWordList = Array.Empty<string>();
         private string _typedBuffer = "";
@@ -40,10 +43,14 @@ namespace EasyWords
         public MainWindow()
         {
             InitializeComponent();
+            Instance = this;
 
             _popupManager = new PopupManager(this, () => ResetBuffer());
 
-            System.Windows.Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            if (System.Windows.Application.Current != null)
+            {
+                System.Windows.Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+            }
 
             this.Topmost = true;
             this.ShowInTaskbar = false;
@@ -289,26 +296,28 @@ namespace EasyWords
                 uint vkCode = hookStruct.vkCode;
                 bool isInjected = (hookStruct.flags & 0x10) != 0;
 
-                if (isInjected || vkCode == 0xE7 || vkCode == 0)
+                // Nếu chính app đang tự động gõ (IsInjecting = true) thì bỏ qua
+                // Hoặc nếu phím rỗng (vkCode == 0)
+                if ((isInjected && MainWindow.IsInjecting) || vkCode == 0)
                 {
                     return CallNextHookEx(_hookID, nCode, wParam, lParam);
                 }
 
                 if (wParam == (IntPtr)WM_LBUTTONDOWN || wParam == (IntPtr)WM_RBUTTONDOWN)
                 {
-                    if (System.Windows.Application.Current.MainWindow?.Visibility == Visibility.Visible)
+                    var mainWin = MainWindow.Instance;
+                    if (mainWin != null && mainWin.Visibility == Visibility.Visible)
                     {
-                        System.Windows.Application.Current.Dispatcher.Invoke(() =>
+                        mainWin.Dispatcher.BeginInvoke(new Action(() =>
                         {
-                            var mainWin = (MainWindow)System.Windows.Application.Current.MainWindow;
                             mainWin._popupManager.Hide();
-                        });
+                        }));
                     }
                 }
 
                 if (wParam == (IntPtr)WM_KEYDOWN || wParam == (IntPtr)WM_SYSKEYDOWN)
                 {
-                    var mainWin = System.Windows.Application.Current.MainWindow as MainWindow;
+                    var mainWin = MainWindow.Instance;
                     if (mainWin != null)
                     {
                         if (vkCode == 0x09 || vkCode == 0x26 || vkCode == 0x28)
@@ -330,24 +339,28 @@ namespace EasyWords
                         {
                             c = (char)vkCode;
                         }
+                        else if (vkCode == 0xE7) // VK_PACKET (Unikey/Unicode characters)
+                        {
+                            c = char.ToLower((char)hookStruct.scanCode);
+                        }
 
                         if (c != '\0')
                         {
                             mainWin._typedBuffer += c;
-                            mainWin.Dispatcher.Invoke(() => mainWin.FilterAndShowSuggestions(mainWin._typedBuffer));
+                            mainWin.Dispatcher.BeginInvoke(new Action(() => mainWin.FilterAndShowSuggestions(mainWin._typedBuffer)));
                         }
                         else if (vkCode == 0x08) // Backspace
                         {
                             if (mainWin._typedBuffer.Length > 0)
                             {
                                 mainWin._typedBuffer = mainWin._typedBuffer.Substring(0, mainWin._typedBuffer.Length - 1);
-                                mainWin.Dispatcher.Invoke(() => mainWin.FilterAndShowSuggestions(mainWin._typedBuffer));
+                                mainWin.Dispatcher.BeginInvoke(new Action(() => mainWin.FilterAndShowSuggestions(mainWin._typedBuffer)));
                             }
                         }
                         else if (vkCode == 0x20 || vkCode == 0x0D) // Space/Enter
                         {
                             mainWin._typedBuffer = "";
-                            mainWin.Dispatcher.Invoke(() => mainWin._popupManager.Hide());
+                            mainWin.Dispatcher.BeginInvoke(new Action(() => mainWin._popupManager.Hide()));
                         }
                     }
                 }
@@ -374,6 +387,7 @@ namespace EasyWords
 
             ThreadPool.QueueUserWorkItem(_ =>
             {
+                MainWindow.IsInjecting = true;
                 try
                 {
                     for (int i = 0; i < backspaceCount; i++)
@@ -405,6 +419,10 @@ namespace EasyWords
                 catch (Exception ex)
                 {
                     Debug.WriteLine("Lỗi ApplySelectedWord: " + ex.Message);
+                }
+                finally
+                {
+                    MainWindow.IsInjecting = false;
                 }
             });
         }
@@ -580,7 +598,7 @@ namespace EasyWords
                 }
 
                 _autoHideTimer.Stop();
-                _autoHideTimer.Start();
+                // Removed _autoHideTimer.Start() to keep popup open until ESC is pressed
             });
         }
 
@@ -602,7 +620,7 @@ namespace EasyWords
             if (_window.Visibility == Visibility.Visible)
             {
                 _autoHideTimer.Stop();
-                _autoHideTimer.Start();
+                // Removed _autoHideTimer.Start() to keep popup open
             }
         }
     }
